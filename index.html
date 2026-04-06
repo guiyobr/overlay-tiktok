@@ -39,9 +39,12 @@
     display: block;
     object-fit: contain;
     background: transparent;
+    transform-origin: center;
+    transition: transform 0.2s ease;
   }
 </style>
 </head>
+
 <body>
 
 <div id="overlay">
@@ -50,14 +53,14 @@
 
 <script>
   const videos = [
-    "ytoverlay.webm",
-    "seguirme.webm",
-    "codigo.webm"
+    { src: "ytoverlay.webm", scale: 1, offsetY: 0 },
+    { src: "seguirme.webm", scale: 1, offsetY: 0 },
+    { src: "codigo.webm", scale: 1.35, offsetY: -12 } // 👈 ESTE SUBE
   ];
 
-  const PAUSA_ENTRE_RONDAS = 60000; // 2 minutos
-  const PAUSA_ENTRE_VIDEOS = 200;    // pausa mínima entre uno y otro
-  const PRIMER_INICIO = 3000;        // primer arranque al abrir
+  const PAUSA_ENTRE_RONDAS = 120000;
+  const PAUSA_ENTRE_VIDEOS = 150;
+  const PRIMER_INICIO = 3000;
 
   const overlay = document.getElementById("overlay");
   const video = document.getElementById("video");
@@ -69,14 +72,19 @@
     video.pause();
     video.removeAttribute("src");
     video.load();
+    video.style.transform = "scale(1) translateY(0px)";
   }
 
   function mostrarVideoActual() {
     limpiarVideo();
 
-    const archivo = videos[indice];
-    video.src = archivo;
+    const item = videos[indice];
+
+    video.src = item.src;
     video.currentTime = 0;
+
+    // 👇 ESCALA + POSICIÓN
+    video.style.transform = `scale(${item.scale}) translateY(${item.offsetY}px)`;
 
     overlay.classList.add("show");
 
@@ -92,7 +100,7 @@
     setTimeout(() => {
       limpiarVideo();
       if (callback) callback();
-    }, 400); // un poco más que la transición CSS
+    }, 400);
   }
 
   function avanzarFlujo() {
