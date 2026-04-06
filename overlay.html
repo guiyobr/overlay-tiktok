@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  html, body {
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+    width: 100%;
+    height: 100%;
+  }
+
+  #overlay {
+    position: absolute;
+    right: 40px;
+    bottom: 220px;
+    width: 420px;
+    height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+  }
+
+  #overlay.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  video {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    background: transparent;
+  }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <video id="video" muted playsinline preload="auto"></video>
+</div>
+
+<script>
+  const videos = [
+    "ytoverlay.webm",
+    "seguirme.webm",
+    "codigo.webm"
+  ];
+
+  const PAUSA_ENTRE_RONDAS = 60000; // 2 minutos
+  const PAUSA_ENTRE_VIDEOS = 200;    // pausa mínima entre uno y otro
+  const PRIMER_INICIO = 3000;        // primer arranque al abrir
+
+  const overlay = document.getElementById("overlay");
+  const video = document.getElementById("video");
+
+  let indice = 0;
+  let timeoutActual = null;
+
+  function limpiarVideo() {
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+  }
+
+  function mostrarVideoActual() {
+    limpiarVideo();
+
+    const archivo = videos[indice];
+    video.src = archivo;
+    video.currentTime = 0;
+
+    overlay.classList.add("show");
+
+    video.play().catch((err) => {
+      console.error("Error al reproducir:", err);
+      avanzarFlujo();
+    });
+  }
+
+  function ocultarOverlay(callback) {
+    overlay.classList.remove("show");
+
+    setTimeout(() => {
+      limpiarVideo();
+      if (callback) callback();
+    }, 400); // un poco más que la transición CSS
+  }
+
+  function avanzarFlujo() {
+    const esUltimo = indice === videos.length - 1;
+
+    ocultarOverlay(() => {
+      if (esUltimo) {
+        indice = 0;
+        timeoutActual = setTimeout(() => {
+          mostrarVideoActual();
+        }, PAUSA_ENTRE_RONDAS);
+      } else {
+        indice++;
+        timeoutActual = setTimeout(() => {
+          mostrarVideoActual();
+        }, PAUSA_ENTRE_VIDEOS);
+      }
+    });
+  }
+
+  video.addEventListener("ended", () => {
+    avanzarFlujo();
+  });
+
+  video.addEventListener("error", () => {
+    console.error("Error cargando el vídeo:", video.currentSrc);
+    avanzarFlujo();
+  });
+
+  timeoutActual = setTimeout(() => {
+    mostrarVideoActual();
+  }, PRIMER_INICIO);
+</script>
+
+</body>
+</html>
